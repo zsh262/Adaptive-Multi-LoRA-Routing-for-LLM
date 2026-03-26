@@ -1,0 +1,8 @@
+echo '*.md
+models/
+data/
+__pycache__/
+*.pyc
+.git/
+*.log
+' | Out-File -Encoding utf8NoBOM .gitignore

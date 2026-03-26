@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-fixed": "#a1efff",
+                        "secondary": "#632ce5",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#191c1d",
+                        "on-tertiary-fixed-variant": "#004e59",
+                        "on-secondary-fixed": "#20005f",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#fcf6ff",
+                        "surface-bright": "#f8f9fa",
+                        "surface-container-low": "#f3f4f5",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#004493",
+                        "secondary-fixed-dim": "#cdbdff",
+                        "surface": "#f8f9fa",
+                        "inverse-on-surface": "#f0f1f2",
+                        "surface-container-high": "#e7e8e9",
+                        "on-surface": "#191c1d",
+                        "surface-container": "#edeeef",
+                        "on-surface-variant": "#414754",
+                        "background": "#f8f9fa",
+                        "on-primary-container": "#ffffff",
+                        "tertiary-container": "#008394",
+                        "surface-tint": "#005bc0",
+                        "on-secondary-fixed-variant": "#4f00d0",
+                        "outline": "#727785",
+                        "on-primary-fixed": "#001a41",
+                        "secondary-fixed": "#e8deff",
+                        "primary-container": "#1a73e8",
+                        "outline-variant": "#c1c6d6",
+                        "tertiary": "#006876",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#7c4dff",
+                        "inverse-primary": "#adc7ff",
+                        "error": "#ba1a1a",
+                        "on-tertiary-container": "#000608",
+                        "on-tertiary-fixed": "#001f25",
+                        "primary": "#005bbf",
+                        "inverse-surface": "#2e3132",
+                        "primary-fixed": "#d8e2ff",
+                        "tertiary-fixed-dim": "#44d8f1",
+                        "primary-fixed-dim": "#adc7ff",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#e1e3e4",
+                        "surface-container-highest": "#e1e3e4",
+                        "surface-dim": "#d9dadb",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter", "PingFang SC", "Microsoft YaHei", "sans-serif"],
+                        "body": ["Inter", "PingFang SC", "Microsoft YaHei", "sans-serif"],
+                        "label": ["Inter", "PingFang SC", "Microsoft YaHei", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(193, 198, 214, 0.2); }
+        .ai-gradient-bg { background: linear-gradient(135deg, #1a73e8 0%, #632ce5 100%); }
+    </style>
+<title>Adaptive Multi-LoRA Routing</title>
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+</head>
+<body class="text-on-surface">
+<div class="min-h-screen">
+<header class="h-16 flex items-center justify-between px-8 bg-surface-container-lowest/60 backdrop-blur-md border-b border-outline-variant/10">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-xl ai-gradient-bg flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<div class="text-sm font-semibold text-on-surface">Adaptive Multi-LoRA System</div>
+<div class="text-xs text-on-surface-variant">统一对话与路由分析</div>
+</div>
+</div>
+<div class="text-xs text-on-surface-variant">API: /generate</div>
+<input id="apiUrl" type="hidden" value="/generate"/>
+</header>
+<div class="flex h-[calc(100vh-64px)]">
+<aside class="w-64 border-r border-outline-variant/10 bg-surface-container-lowest p-4 flex-shrink-0 overflow-y-auto">
+<div class="flex items-center justify-between mb-4">
+<div class="text-sm font-semibold text-on-surface">历史记录</div>
+<button id="newChat" class="text-xs px-3 py-1 rounded-full bg-primary-container text-on-primary-container">新建对话</button>
+</div>
+<div id="conversationList" class="space-y-2"></div>
+</aside>
+<div id="mainScroll" class="flex-1 p-8 space-y-8 overflow-y-auto">
+<section id="home" class="relative rounded-3xl overflow-hidden p-10 bg-surface-container-lowest shadow-sm border border-outline-variant/10">
+<div class="relative z-10 max-w-2xl space-y-4">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-tertiary/10 text-tertiary">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+<span class="text-xs font-medium tracking-wide">系统状态: 运行中</span>
+</div>
+<span class="inline-block px-4 py-1.5 rounded-full bg-secondary-fixed text-on-secondary-fixed text-xs font-bold tracking-widest uppercase">Adaptive Framework</span>
+<h2 class="text-4xl font-medium text-on-surface leading-tight">自适应多专家 LoRA 路由系统</h2>
+<p class="text-base text-on-surface-variant leading-relaxed">在一个系统内完成路由、专家选择与推理，统一接入现有前端页面。</p>
+</div>
+</section>
+
+<section id="chat" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 bg-surface-container-lowest rounded-3xl border border-outline-variant/10 p-6 space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-semibold text-on-surface">核心聊天</h3>
+<div class="text-xs text-on-surface-variant">Ctrl + Enter 发送</div>
+</div>
+<div id="chatMessages" class="h-[520px] overflow-y-auto rounded-2xl border border-outline-variant/10 bg-surface-container-low p-4 space-y-3"></div>
+<textarea id="query" rows="4" class="w-full rounded-2xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm" placeholder="输入你的问题，如：帮我写一个快速排序算法"></textarea>
+<div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+<div>
+<label class="text-xs text-on-surface-variant">领域</label>
+<select id="domain" class="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-3 py-2 text-sm">
+<option value="auto">auto</option>
+<option value="coding">coding</option>
+<option value="paper">paper</option>
+<option value="speech">speech</option>
+</select>
+</div>
+<div>
+<label class="text-xs text-on-surface-variant">语言</label>
+<select id="codeLanguage" class="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-3 py-2 text-sm">
+<option value="">自动</option>
+<option value="Python">Python</option>
+<option value="C">C</option>
+<option value="C++">C++</option>
+<option value="Java">Java</option>
+<option value="Go">Go</option>
+<option value="JavaScript">JavaScript</option>
+<option value="Rust">Rust</option>
+</select>
+</div>
+<div class="flex items-end gap-2">
+<input id="routeOnly" type="checkbox" class="rounded"/>
+<label for="routeOnly" class="text-sm text-on-surface-variant">仅在可用 LoRA 中路由</label>
+</div>
+<div class="flex items-end gap-2">
+<input id="fastMode" type="checkbox" class="rounded"/>
+<label for="fastMode" class="text-sm text-on-surface-variant">快速模式</label>
+</div>
+<div>
+<label class="text-xs text-on-surface-variant">Max New Tokens</label>
+<input id="tokens" type="number" min="64" max="1024" step="16" value="256" class="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-3 py-2 text-sm"/>
+</div>
+<div class="flex items-end">
+<button id="sendBtn" class="w-full rounded-xl bg-primary-container text-on-primary-container px-4 py-2 text-sm font-semibold">发送</button>
+</div>
+</div>
+<div class="rounded-2xl bg-surface-container-low p-4 border border-outline-variant/10">
+<div class="text-sm font-semibold text-on-surface mb-2">推荐话题</div>
+<div id="suggestions" class="flex flex-wrap gap-2"></div>
+</div>
+</div>
+<div id="route" class="bg-surface-container-lowest rounded-3xl border border-outline-variant/10 p-6 space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-semibold text-on-surface">路由分析</h3>
+<span class="text-xs text-on-surface-variant">实时选择</span>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div class="rounded-2xl bg-surface-container-low p-4">
+<div class="text-xs text-on-surface-variant">选中领域</div>
+<div id="selectedDomain" class="text-lg font-semibold text-on-surface mt-1">-</div>
+</div>
+<div class="rounded-2xl bg-surface-container-low p-4">
+<div class="text-xs text-on-surface-variant">是否加载 LoRA</div>
+<div id="usedAdapter" class="text-lg font-semibold text-on-surface mt-1">-</div>
+</div>
+<div class="rounded-2xl bg-surface-container-low p-4 col-span-2">
+<div class="text-xs text-on-surface-variant">可用领域</div>
+<div id="availableDomains" class="text-sm text-on-surface mt-1">-</div>
+</div>
+<div class="rounded-2xl bg-surface-container-low p-4 col-span-2">
+<div class="text-xs text-on-surface-variant">基础模型</div>
+<div id="baseModel" class="text-sm text-on-surface mt-1">-</div>
+</div>
+</div>
+<div class="rounded-2xl bg-surface-container-low p-4 border border-outline-variant/10">
+<div class="text-sm font-semibold text-on-surface mb-2">路由得分</div>
+<pre id="scores" class="text-xs whitespace-pre-wrap break-all text-on-surface-variant">-</pre>
+</div>
+</div>
+ </section>
+ </div>
+ </div>
+ </div>
+
+<script>
+    const btn = document.getElementById('sendBtn')
+    const query = document.getElementById('query')
+    const domain = document.getElementById('domain')
+    const routeOnly = document.getElementById('routeOnly')
+    const fastMode = document.getElementById('fastMode')
+    const tokens = document.getElementById('tokens')
+    const codeLanguage = document.getElementById('codeLanguage')
+    const apiUrl = document.getElementById('apiUrl')
+    const selectedDomain = document.getElementById('selectedDomain')
+    const usedAdapter = document.getElementById('usedAdapter')
+    const availableDomains = document.getElementById('availableDomains')
+    const scores = document.getElementById('scores')
+    const baseModel = document.getElementById('baseModel')
+    const chatMessages = document.getElementById('chatMessages')
+    const suggestions = document.getElementById('suggestions')
+    const conversationList = document.getElementById('conversationList')
+    const newChat = document.getElementById('newChat')
+
+    routeOnly.checked = true
+
+    const systemPrompt = "你是 Adaptive Multi-LoRA 助手，回答清晰、完整、可执行。"
+
+    function escapeHtml(text) {
+      return text
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;')
+    }
+
+    function renderMessageContent(text) {
+      const parts = text.split("```")
+      if (parts.length === 1) {
+        return `<div class="whitespace-pre-wrap">${escapeHtml(text)}</div>`
+      }
+      const out = []
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i]
+        if (i % 2 === 0) {
+          out.push(`<div class="whitespace-pre-wrap">${escapeHtml(part)}</div>`)
+        } else {
+          const lines = part.split('\n')
+          const lang = lines[0].trim()
+          const code = (lang ? lines.slice(1) : lines).join('\n')
+          const safeLang = lang || "plaintext"
+          out.push(`<pre class="rounded-lg bg-surface-container-low p-3 overflow-x-auto"><code class="language-${safeLang}">${escapeHtml(code)}</code></pre>`)
+        }
+      }
+      return out.join("")
+    }
+
+    function appendMessage(role, content) {
+      const wrap = document.createElement('div')
+      wrap.className = role === 'user' ? 'flex justify-end' : 'flex justify-start'
+      const bubble = document.createElement('div')
+      bubble.className = role === 'user'
+        ? 'max-w-[80%] rounded-2xl bg-primary-container text-on-primary-container px-4 py-2 text-sm whitespace-pre-wrap'
+        : 'max-w-[80%] rounded-2xl bg-surface-container-high text-on-surface px-4 py-2 text-sm whitespace-pre-wrap'
+      if (role === 'assistant') {
+        bubble.innerHTML = renderMessageContent(content)
+        bubble.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el))
+      } else {
+        bubble.textContent = content
+      }
+      wrap.appendChild(bubble)
+      chatMessages.appendChild(wrap)
+      chatMessages.scrollTop = chatMessages.scrollHeight
+      return bubble
+    }
+
+    let conversations = []
+    let activeId = null
+    let activeMessages = []
+
+    async function apiGet(path) {
+      const res = await fetch(path)
+      if (!res.ok) throw new Error(await res.text())
+      return res.json()
+    }
+
+    async function apiPost(path, body) {
+      const res = await fetch(path, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body || {})
+      })
+      if (!res.ok) throw new Error(await res.text())
+      return res.json()
+    }
+
+    async function apiPut(path, body) {
+      const res = await fetch(path, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body || {})
+      })
+      if (!res.ok) throw new Error(await res.text())
+      return res.json()
+    }
+
+    function renderConversationList() {
+      conversationList.innerHTML = ""
+      for (const conv of conversations) {
+        const btn = document.createElement('button')
+        btn.className = `w-full text-left px-3 py-2 rounded-xl border ${conv.id === activeId ? 'bg-primary-container text-on-primary-container border-primary-container' : 'bg-surface-container-low text-on-surface border-outline-variant/10'}`
+        btn.textContent = conv.title || "新对话"
+        btn.addEventListener('click', async () => {
+          activeId = conv.id
+          renderConversationList()
+          await loadConversation(activeId)
+        })
+        conversationList.appendChild(btn)
+      }
+    }
+
+    async function loadConversation(id) {
+      const data = await apiGet(`/api/conversations/${id}`)
+      activeMessages = data.messages || []
+      chatMessages.innerHTML = ""
+      for (const msg of activeMessages) {
+        appendMessage(msg.role, msg.content)
+      }
+    }
+
+    async function refreshConversations() {
+      const data = await apiGet("/api/conversations")
+      conversations = data.items || []
+      if (!conversations.length) {
+        const created = await apiPost("/api/conversations", { title: "新对话" })
+        conversations = [{ id: created.id, title: created.title }]
+      }
+      if (!activeId) {
+        activeId = conversations[0].id
+      }
+      renderConversationList()
+      await loadConversation(activeId)
+    }
+
+    async function updateTitleFromUser(text) {
+      const conv = conversations.find(c => c.id === activeId)
+      if (conv && conv.title === "新对话") {
+        const title = text.length > 16 ? `${text.slice(0, 16)}…` : text
+        await apiPut(`/api/conversations/${activeId}`, { title })
+        conv.title = title
+        renderConversationList()
+      }
+    }
+
+    function buildContext(userInput) {
+      const recent = activeMessages.slice(-2)
+      const lines = [systemPrompt, "仅根据当前问题回答，避免复用历史算法。"]
+      for (const m of recent) {
+        lines.push(m.role === 'user' ? `用户: ${m.content}` : `助手: ${m.content}`)
+      }
+      lines.push(`用户: ${userInput}`)
+      lines.push("助手:")
+      return lines.join("\n")
+    }
+
+    refreshConversations()
+
+    function formatScores(data) {
+      if (!data || typeof data !== 'object') return '-'
+      const entries = Object.entries(data)
+      if (!entries.length) return '-'
+      const rounded = {}
+      for (const [k, v] of entries) {
+        rounded[k] = Math.round((Number(v) || 0) * 100) / 100
+      }
+      return JSON.stringify(rounded, null, 2)
+    }
+
+    function renderSuggestions(items) {
+      suggestions.innerHTML = ''
+      for (const text of items) {
+        const btn = document.createElement('button')
+        btn.className = 'px-3 py-1 rounded-full bg-surface-container-high text-on-surface text-xs hover:bg-surface-container-highest'
+        btn.textContent = text
+        btn.addEventListener('click', () => {
+          query.value = text
+          send()
+        })
+        suggestions.appendChild(btn)
+      }
+    }
+
+    function buildSuggestions(domainValue, langValue) {
+      if (domainValue === 'paper') {
+        return ['总结核心贡献', '列出相关工作对比', '解释关键公式', '给出应用场景']
+      }
+      if (domainValue === 'speech') {
+        return ['解释模型结构', '比较两种语音模型', '给出训练数据建议', '列出评估指标']
+      }
+      const lang = langValue || 'Python'
+      return [`给出 ${lang} 版本`, '优化时间复杂度', '添加测试用例', '解释算法步骤']
+    }
+
+    async function send() {
+      const userText = query.value.trim()
+      if (!userText) return
+      query.value = ""
+      await updateTitleFromUser(userText)
+      await apiPost(`/api/conversations/${activeId}/messages`, { role: "user", content: userText })
+      activeMessages.push({ role: "user", content: userText })
+      appendMessage('user', userText)
+      const pending = appendMessage('assistant', '生成中…')
+      const url = apiUrl.value.trim()
+      const body = {
+        query: userText,
+        conversation_id: activeId,
+        domain: domain.value,
+        route_available_only: routeOnly.checked,
+        max_new_tokens: parseInt(tokens.value, 10) || 256,
+        code_language: codeLanguage.value,
+        fast_mode: fastMode.checked
+      }
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(body)
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || '请求失败')
+        pending.innerHTML = renderMessageContent(data.answer ?? '-')
+        pending.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el))
+        await apiPost(`/api/conversations/${activeId}/messages`, { role: "assistant", content: data.answer ?? '' })
+        activeMessages.push({ role: "assistant", content: data.answer ?? '' })
+        selectedDomain.textContent = data.selected_domain ?? '-'
+        usedAdapter.textContent = String(data.used_adapter ?? false)
+        availableDomains.textContent = Array.isArray(data.available_domains) ? data.available_domains.join(', ') : '-'
+        scores.textContent = formatScores(data.scores)
+        baseModel.textContent = data.base_model_path ?? '-'
+        renderSuggestions(buildSuggestions(data.selected_domain || domain.value, codeLanguage.value))
+      } catch (e) {
+        pending.textContent = String(e)
+      }
+    }
+
+    btn.addEventListener('click', send)
+    query.addEventListener('keydown', (e)=>{ if(e.ctrlKey && e.key==='Enter') send() })
+
+    newChat.addEventListener('click', async () => {
+      const created = await apiPost("/api/conversations", { title: "新对话" })
+      activeId = created.id
+      await refreshConversations()
+    })
+  </script>
+</body></html>
